@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f7a5a" />
+    <meta name="description" content="A Xiao Liu Ren decision timing calculator for quick traditional readings." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="小六壬" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Xiao Liu Ren Decision Timing</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="styles.css?v=2" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">小六壬</p>
+            <h1>Decision Timing</h1>
+          </div>
+          <button id="nowButton" class="icon-button" type="button" aria-label="Use current time" title="Use current time">
+            <span aria-hidden="true">↻</span>
+          </button>
+        </header>
+
+        <section class="panel input-panel" aria-label="Reading input">
+          <label class="field wide">
+            <span>Decision</span>
+            <input id="questionInput" type="text" value="Is now the right time to decide?" />
+          </label>
+
+          <label class="field">
+            <span>Time</span>
+            <input id="timeInput" type="datetime-local" />
+          </label>
+
+          <div class="mode-row" role="group" aria-label="Lunar date mode">
+            <button id="autoMode" class="segmented active" type="button">Auto lunar</button>
+            <button id="manualMode" class="segmented" type="button">Manual lunar</button>
+          </div>
+
+          <div class="lunar-grid">
+            <label class="field">
+              <span>Lunar month</span>
+              <input id="monthInput" type="number" min="1" max="12" inputmode="numeric" />
+            </label>
+            <label class="field">
+              <span>Lunar day</span>
+              <input id="dayInput" type="number" min="1" max="30" inputmode="numeric" />
+            </label>
+          </div>
+
+          <p id="calendarNote" class="note" aria-live="polite"></p>
+        </section>
+
+        <section class="result-band" aria-label="Decision verdict">
+          <div class="verdict">
+            <p id="resultName" class="result-name">-</p>
+            <p id="resultVerdict" class="result-verdict">Select a time to calculate.</p>
+          </div>
+          <div class="badge-row">
+            <div id="resultBadge" class="badge neutral">Ready</div>
+            <div id="categoryBadge" class="badge topic">Category: -</div>
+          </div>
+        </section>
+
+        <section class="panel details-panel" aria-label="Reading details">
+          <div class="number-strip">
+            <div>
+              <span class="caption">Month</span>
+              <strong id="monthNumber">-</strong>
+            </div>
+            <div>
+              <span class="caption">Day</span>
+              <strong id="dayNumber">-</strong>
+            </div>
+            <div>
+              <span class="caption">Hour</span>
+              <strong id="hourNumber">-</strong>
+            </div>
+          </div>
+
+          <ol id="pathList" class="path-list" aria-label="Counting path"></ol>
+
+          <div class="custom-answer">
+            <p class="caption">Question-based answer</p>
+            <h2 id="customTitle">Custom answer</h2>
+            <p id="customAnswer"></p>
+            <p id="timingAdvice" class="timing-advice"></p>
+          </div>
+
+          <div class="meaning">
+            <h2 id="meaningTitle">Meaning</h2>
+            <p id="meaningText"></p>
+            <p id="contextText" class="context-text"></p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js?v=2"></script>
+  </body>
+</html>
