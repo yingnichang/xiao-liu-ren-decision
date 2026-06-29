@@ -159,9 +159,13 @@ const elements = {
   monthInput: document.querySelector("#monthInput"),
   dayInput: document.querySelector("#dayInput"),
   nowButton: document.querySelector("#nowButton"),
+  revealButton: document.querySelector("#revealButton"),
+  luckyButton: document.querySelector("#luckyButton"),
   autoMode: document.querySelector("#autoMode"),
   manualMode: document.querySelector("#manualMode"),
   calendarNote: document.querySelector("#calendarNote"),
+  actionNote: document.querySelector("#actionNote"),
+  detailsPanel: document.querySelector("#detailsPanel"),
   resultName: document.querySelector("#resultName"),
   resultVerdict: document.querySelector("#resultVerdict"),
   resultBadge: document.querySelector("#resultBadge"),
@@ -317,9 +321,9 @@ function getCustomAnswer(question, category, reading) {
 }
 
 function resetOutput(message) {
-  elements.resultName.textContent = "-";
+  elements.resultName.textContent = "Veiled";
   elements.resultVerdict.textContent = message;
-  elements.resultBadge.textContent = "Check input";
+  elements.resultBadge.textContent = "Hidden";
   elements.resultBadge.className = "badge neutral";
   elements.categoryBadge.textContent = "Category: -";
   elements.monthNumber.textContent = "-";
@@ -332,6 +336,7 @@ function resetOutput(message) {
   elements.meaningTitle.textContent = "Meaning";
   elements.meaningText.textContent = "";
   elements.contextText.textContent = "";
+  elements.detailsPanel.hidden = true;
 }
 
 function setMode(auto) {
@@ -340,14 +345,18 @@ function setMode(auto) {
   elements.manualMode.classList.toggle("active", !auto);
   elements.monthInput.disabled = auto;
   elements.dayInput.disabled = auto;
-  update();
+  prepareInputs();
+  hideReading();
 }
 
-function update() {
+function hideReading(message = "Ask a question, then reveal the destiny. Or try a lucky draw.") {
+  resetOutput(message);
+}
+
+function prepareInputs() {
   const date = fromDateTimeLocal(elements.timeInput.value);
   if (!date) {
-    resetOutput("Select a valid time to calculate.");
-    return;
+    return { error: "Select a valid time to calculate." };
   }
 
   const autoLunar = getAutoLunar(date);
@@ -367,16 +376,22 @@ function update() {
   }
 
   if (!(month >= 1 && month <= 12 && day >= 1 && day <= 30)) {
-    resetOutput("Enter a lunar month from 1-12 and day from 1-30.");
-    return;
+    return { error: "Enter a lunar month from 1-12 and day from 1-30." };
   }
 
   const hour = getHourBranch(date);
   const reading = calculate(month, day, hour.number);
-  const final = reading.finalResult;
-  const category = detectCategory(elements.questionInput.value);
-  const custom = getCustomAnswer(elements.questionInput.value, category, reading);
+  return { month, day, hour, reading };
+}
 
+function showReading(prepared, options = {}) {
+  const { month, day, hour, reading } = prepared;
+  const final = reading.finalResult;
+  const question = options.question ?? elements.questionInput.value;
+  const category = detectCategory(question);
+  const custom = getCustomAnswer(question, category, reading);
+
+  elements.detailsPanel.hidden = false;
   elements.monthNumber.textContent = month;
   elements.dayNumber.textContent = day;
   elements.hourNumber.textContent = hour.number;
@@ -385,7 +400,7 @@ function update() {
   elements.resultBadge.textContent = final.label;
   elements.resultBadge.className = `badge ${final.nature === "good" ? "good" : "bad"}`;
   elements.categoryBadge.textContent = `Category: ${categoryLabels[category]}`;
-  elements.customTitle.textContent = custom.title;
+  elements.customTitle.textContent = options.mode === "lucky" ? "Lucky draw answer" : custom.title;
   elements.customAnswer.textContent = custom.answer;
   elements.timingAdvice.textContent = custom.timing;
   elements.meaningTitle.textContent = `${final.name} Meaning`;
@@ -404,16 +419,60 @@ function update() {
   });
 }
 
+function revealDestiny() {
+  elements.actionNote.textContent = "";
+  const question = elements.questionInput.value.trim();
+
+  if (!question) {
+    hideReading("Type your customized question first, then reveal the destiny.");
+    elements.actionNote.textContent = "Reveal the Destiny needs your question. Lucky Draw works without one.";
+    elements.questionInput.focus();
+    return;
+  }
+
+  const prepared = prepareInputs();
+  if (prepared.error) {
+    hideReading(prepared.error);
+    elements.actionNote.textContent = prepared.error;
+    return;
+  }
+
+  showReading(prepared, { mode: "question", question });
+}
+
+function luckyDraw() {
+  elements.actionNote.textContent = "";
+
+  const month = Math.floor(Math.random() * 12) + 1;
+  const day = Math.floor(Math.random() * 30) + 1;
+  const hourNumber = Math.floor(Math.random() * 12) + 1;
+  const branch = branches[hourNumber - 1];
+  const hour = { name: branch[0], number: branch[1], range: branch[2] };
+  const reading = calculate(month, day, hour.number);
+
+  elements.monthInput.value = month;
+  elements.dayInput.value = day;
+  elements.calendarNote.textContent = "Lucky draw uses a random lunar month, day, and hour.";
+  showReading({ month, day, hour, reading }, { mode: "lucky", question: elements.questionInput.value });
+}
+
 elements.nowButton.addEventListener("click", () => {
   elements.timeInput.value = toDateTimeLocal(new Date());
-  update();
+  prepareInputs();
+  hideReading();
 });
 
+elements.revealButton.addEventListener("click", revealDestiny);
+elements.luckyButton.addEventListener("click", luckyDraw);
 elements.autoMode.addEventListener("click", () => setMode(true));
 elements.manualMode.addEventListener("click", () => setMode(false));
 
 [elements.timeInput, elements.monthInput, elements.dayInput, elements.questionInput].forEach((element) => {
-  element.addEventListener("input", update);
+  element.addEventListener("input", () => {
+    elements.actionNote.textContent = "";
+    prepareInputs();
+    hideReading();
+  });
 });
 
 elements.timeInput.value = toDateTimeLocal(new Date());
