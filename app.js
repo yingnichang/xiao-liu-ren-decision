@@ -356,7 +356,11 @@ function prepareInputs() {
 
   const month = autoLunar.month;
   const day = autoLunar.day;
-  const momentNumber = Number(elements.momentInput.value);
+  const momentValue = elements.momentInput.value.trim();
+  const momentNumber = momentValue ? Number(momentValue) : null;
+  const hour = getHourBranch(date);
+  const countNumber = momentNumber || hour.number;
+  const countLabel = momentNumber ? "moment number" : `${hour.name} / automatic Chinese hour`;
   elements.monthInput.textContent = month;
   elements.dayInput.textContent = day;
   elements.calendarNote.textContent = `Auto lunar date: ${month}/${day}`;
@@ -365,16 +369,16 @@ function prepareInputs() {
     return { error: "Auto lunar month/day is outside the expected range." };
   }
 
-  if (!Number.isInteger(momentNumber) || momentNumber < 1) {
+  if (momentValue && (!Number.isInteger(momentNumber) || momentNumber < 1)) {
     return { error: "Enter a whole moment number of 1 or higher." };
   }
 
-  const reading = calculate(month, day, momentNumber);
-  return { month, day, momentNumber, reading };
+  const reading = calculate(month, day, countNumber);
+  return { month, day, countNumber, countLabel, reading };
 }
 
 function showReading(prepared, options = {}) {
-  const { month, day, momentNumber, reading } = prepared;
+  const { month, day, countNumber, countLabel, reading } = prepared;
   const final = reading.finalResult;
   const question = options.question ?? elements.questionInput.value;
   const category = detectCategory(question);
@@ -383,7 +387,7 @@ function showReading(prepared, options = {}) {
   elements.detailsPanel.hidden = false;
   elements.monthNumber.textContent = month;
   elements.dayNumber.textContent = day;
-  elements.momentNumber.textContent = momentNumber;
+  elements.momentNumber.textContent = countNumber;
   elements.resultName.textContent = final.name;
   elements.resultVerdict.textContent = final.verdict;
   elements.resultBadge.textContent = final.label;
@@ -400,7 +404,7 @@ function showReading(prepared, options = {}) {
   [
     ["Start at 大安, count lunar month", `${month} → ${reading.monthResult.name}`],
     [`From ${reading.monthResult.name}, count lunar day`, `${day} → ${reading.dayResult.name}`],
-    [`From ${reading.dayResult.name}, count moment number`, `${momentNumber} → ${final.name}`]
+    [`From ${reading.dayResult.name}, count ${countLabel}`, `${countNumber} → ${final.name}`]
   ].forEach(([label, value]) => {
     const item = document.createElement("li");
     item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;

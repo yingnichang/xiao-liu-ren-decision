@@ -121,6 +121,12 @@ h1 {
   font-weight: 700;
 }
 
+.field-help {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 input {
   width: 100%;
   min-height: 44px;

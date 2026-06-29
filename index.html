@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
   </head>
   <body>
     <main class="shell">
@@ -52,8 +52,9 @@
           <p id="calendarNote" class="note" aria-live="polite"></p>
 
           <label class="field">
-            <span>Moment number</span>
-            <input id="momentInput" type="number" min="1" step="1" inputmode="numeric" placeholder="Enter the number in your mind" />
+            <span>Moment number (optional)</span>
+            <input id="momentInput" type="number" min="1" step="1" inputmode="numeric" placeholder="First number that comes to mind" />
+            <small class="field-help">Enter the first number that comes to mind right now. Leave this blank to use the automatic Chinese hour.</small>
           </label>
 
           <div class="action-row">
@@ -85,7 +86,7 @@
               <strong id="dayNumber">-</strong>
             </div>
             <div>
-              <span class="caption">Moment</span>
+              <span class="caption">Hour / Moment</span>
               <strong id="momentNumber">-</strong>
             </div>
           </div>
@@ -108,6 +109,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>
