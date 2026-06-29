@@ -143,37 +143,26 @@ button {
   font: inherit;
 }
 
-.mode-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #eef1f5;
-}
-
-.segmented {
-  min-height: 38px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.segmented.active {
-  background: #fff;
-  color: var(--ink);
-  box-shadow: 0 4px 12px rgba(31, 42, 68, 0.12);
-}
-
-.lunar-grid {
+.auto-lunar-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.auto-lunar-card div {
+  min-height: 72px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafbfc;
+}
+
+.auto-lunar-card strong {
+  font-size: 26px;
+  line-height: 1;
 }
 
 .note {
@@ -418,7 +407,7 @@ button {
 }
 
 @media (max-width: 460px) {
-  .lunar-grid,
+  .auto-lunar-card,
   .number-strip,
   .action-row {
     grid-template-columns: 1fr;

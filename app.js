@@ -158,11 +158,10 @@ const elements = {
   questionInput: document.querySelector("#questionInput"),
   monthInput: document.querySelector("#monthInput"),
   dayInput: document.querySelector("#dayInput"),
+  momentInput: document.querySelector("#momentInput"),
   nowButton: document.querySelector("#nowButton"),
   revealButton: document.querySelector("#revealButton"),
   luckyButton: document.querySelector("#luckyButton"),
-  autoMode: document.querySelector("#autoMode"),
-  manualMode: document.querySelector("#manualMode"),
   calendarNote: document.querySelector("#calendarNote"),
   actionNote: document.querySelector("#actionNote"),
   detailsPanel: document.querySelector("#detailsPanel"),
@@ -172,7 +171,7 @@ const elements = {
   categoryBadge: document.querySelector("#categoryBadge"),
   monthNumber: document.querySelector("#monthNumber"),
   dayNumber: document.querySelector("#dayNumber"),
-  hourNumber: document.querySelector("#hourNumber"),
+  momentNumber: document.querySelector("#momentNumber"),
   pathList: document.querySelector("#pathList"),
   customTitle: document.querySelector("#customTitle"),
   customAnswer: document.querySelector("#customAnswer"),
@@ -181,8 +180,6 @@ const elements = {
   meaningText: document.querySelector("#meaningText"),
   contextText: document.querySelector("#contextText")
 };
-
-let useAutoLunar = true;
 
 function pad(value) {
   return String(value).padStart(2, "0");
@@ -255,15 +252,15 @@ function countFrom(startIndex, count) {
   return (startIndex + count - 1) % palaces.length;
 }
 
-function calculate(month, day, hourNumber) {
+function calculate(month, day, momentNumber) {
   const monthIndex = countFrom(0, month);
   const dayIndex = countFrom(monthIndex, day);
-  const hourIndex = countFrom(dayIndex, hourNumber);
+  const finalIndex = countFrom(dayIndex, momentNumber);
 
   return {
     monthResult: palaces[monthIndex],
     dayResult: palaces[dayIndex],
-    finalResult: palaces[hourIndex]
+    finalResult: palaces[finalIndex]
   };
 }
 
@@ -328,7 +325,7 @@ function resetOutput(message) {
   elements.categoryBadge.textContent = "Category: -";
   elements.monthNumber.textContent = "-";
   elements.dayNumber.textContent = "-";
-  elements.hourNumber.textContent = "-";
+  elements.momentNumber.textContent = "-";
   elements.pathList.innerHTML = "";
   elements.customTitle.textContent = "Custom answer";
   elements.customAnswer.textContent = "";
@@ -337,16 +334,6 @@ function resetOutput(message) {
   elements.meaningText.textContent = "";
   elements.contextText.textContent = "";
   elements.detailsPanel.hidden = true;
-}
-
-function setMode(auto) {
-  useAutoLunar = auto;
-  elements.autoMode.classList.toggle("active", auto);
-  elements.manualMode.classList.toggle("active", !auto);
-  elements.monthInput.disabled = auto;
-  elements.dayInput.disabled = auto;
-  prepareInputs();
-  hideReading();
 }
 
 function hideReading(message = "Ask a question, then reveal the destiny. Or try a lucky draw.") {
@@ -360,32 +347,34 @@ function prepareInputs() {
   }
 
   const autoLunar = getAutoLunar(date);
-  let month = Number(elements.monthInput.value);
-  let day = Number(elements.dayInput.value);
-
-  if (useAutoLunar && autoLunar) {
-    month = autoLunar.month;
-    day = autoLunar.day;
-    elements.monthInput.value = month;
-    elements.dayInput.value = day;
-    elements.calendarNote.textContent = `Auto lunar date: ${month}/${day}`;
-  } else if (useAutoLunar) {
-    elements.calendarNote.textContent = "Auto lunar date unavailable. Switch to manual lunar.";
-  } else {
-    elements.calendarNote.textContent = "Manual lunar date is active.";
+  if (!autoLunar) {
+    elements.monthInput.textContent = "-";
+    elements.dayInput.textContent = "-";
+    elements.calendarNote.textContent = "Auto lunar date unavailable in this browser.";
+    return { error: "Auto lunar date is unavailable. Try another browser or device." };
   }
+
+  const month = autoLunar.month;
+  const day = autoLunar.day;
+  const momentNumber = Number(elements.momentInput.value);
+  elements.monthInput.textContent = month;
+  elements.dayInput.textContent = day;
+  elements.calendarNote.textContent = `Auto lunar date: ${month}/${day}`;
 
   if (!(month >= 1 && month <= 12 && day >= 1 && day <= 30)) {
-    return { error: "Enter a lunar month from 1-12 and day from 1-30." };
+    return { error: "Auto lunar month/day is outside the expected range." };
   }
 
-  const hour = getHourBranch(date);
-  const reading = calculate(month, day, hour.number);
-  return { month, day, hour, reading };
+  if (!Number.isInteger(momentNumber) || momentNumber < 1) {
+    return { error: "Enter a whole moment number of 1 or higher." };
+  }
+
+  const reading = calculate(month, day, momentNumber);
+  return { month, day, momentNumber, reading };
 }
 
 function showReading(prepared, options = {}) {
-  const { month, day, hour, reading } = prepared;
+  const { month, day, momentNumber, reading } = prepared;
   const final = reading.finalResult;
   const question = options.question ?? elements.questionInput.value;
   const category = detectCategory(question);
@@ -394,7 +383,7 @@ function showReading(prepared, options = {}) {
   elements.detailsPanel.hidden = false;
   elements.monthNumber.textContent = month;
   elements.dayNumber.textContent = day;
-  elements.hourNumber.textContent = hour.number;
+  elements.momentNumber.textContent = momentNumber;
   elements.resultName.textContent = final.name;
   elements.resultVerdict.textContent = final.verdict;
   elements.resultBadge.textContent = final.label;
@@ -411,7 +400,7 @@ function showReading(prepared, options = {}) {
   [
     ["Start at 大安, count lunar month", `${month} → ${reading.monthResult.name}`],
     [`From ${reading.monthResult.name}, count lunar day`, `${day} → ${reading.dayResult.name}`],
-    [`From ${reading.dayResult.name}, count ${hour.name}`, `${hour.number} → ${final.name}`]
+    [`From ${reading.dayResult.name}, count moment number`, `${momentNumber} → ${final.name}`]
   ].forEach(([label, value]) => {
     const item = document.createElement("li");
     item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
@@ -443,17 +432,18 @@ function revealDestiny() {
 function luckyDraw() {
   elements.actionNote.textContent = "";
 
-  const month = Math.floor(Math.random() * 12) + 1;
-  const day = Math.floor(Math.random() * 30) + 1;
-  const hourNumber = Math.floor(Math.random() * 12) + 1;
-  const branch = branches[hourNumber - 1];
-  const hour = { name: branch[0], number: branch[1], range: branch[2] };
-  const reading = calculate(month, day, hour.number);
+  const momentNumber = Math.floor(Math.random() * 99) + 1;
+  elements.momentInput.value = momentNumber;
 
-  elements.monthInput.value = month;
-  elements.dayInput.value = day;
-  elements.calendarNote.textContent = "Lucky draw uses a random lunar month, day, and hour.";
-  showReading({ month, day, hour, reading }, { mode: "lucky", question: elements.questionInput.value });
+  const prepared = prepareInputs();
+  if (prepared.error) {
+    hideReading(prepared.error);
+    elements.actionNote.textContent = prepared.error;
+    return;
+  }
+
+  elements.calendarNote.textContent = `${elements.calendarNote.textContent} Lucky Draw chose ${momentNumber}.`;
+  showReading(prepared, { mode: "lucky", question: elements.questionInput.value });
 }
 
 elements.nowButton.addEventListener("click", () => {
@@ -464,10 +454,8 @@ elements.nowButton.addEventListener("click", () => {
 
 elements.revealButton.addEventListener("click", revealDestiny);
 elements.luckyButton.addEventListener("click", luckyDraw);
-elements.autoMode.addEventListener("click", () => setMode(true));
-elements.manualMode.addEventListener("click", () => setMode(false));
 
-[elements.timeInput, elements.monthInput, elements.dayInput, elements.questionInput].forEach((element) => {
+[elements.timeInput, elements.momentInput, elements.questionInput].forEach((element) => {
   element.addEventListener("input", () => {
     elements.actionNote.textContent = "";
     prepareInputs();
@@ -476,7 +464,8 @@ elements.manualMode.addEventListener("click", () => setMode(false));
 });
 
 elements.timeInput.value = toDateTimeLocal(new Date());
-setMode(true);
+prepareInputs();
+hideReading();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
