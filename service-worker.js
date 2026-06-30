@@ -1,8 +1,8 @@
-const CACHE_NAME = "xiao-liu-ren-v8";
+const CACHE_NAME = "xiao-liu-ren-v9";
 const APP_SHELL = [
   "./index.html",
-  "./styles.css?v=6",
-  "./app.js?v=6",
+  "./styles.css?v=7",
+  "./app.js?v=7",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

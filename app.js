@@ -156,6 +156,7 @@ const branches = [
 const elements = {
   timeInput: document.querySelector("#timeInput"),
   questionInput: document.querySelector("#questionInput"),
+  yearInput: document.querySelector("#yearInput"),
   monthInput: document.querySelector("#monthInput"),
   dayInput: document.querySelector("#dayInput"),
   momentInput: document.querySelector("#momentInput"),
@@ -169,6 +170,7 @@ const elements = {
   resultVerdict: document.querySelector("#resultVerdict"),
   resultBadge: document.querySelector("#resultBadge"),
   categoryBadge: document.querySelector("#categoryBadge"),
+  yearNumber: document.querySelector("#yearNumber"),
   monthNumber: document.querySelector("#monthNumber"),
   dayNumber: document.querySelector("#dayNumber"),
   momentNumber: document.querySelector("#momentNumber"),
@@ -223,18 +225,21 @@ function parseChineseNumber(value) {
 
 function getAutoLunar(date) {
   const formatters = [
-    new Intl.DateTimeFormat("zh-CN-u-ca-chinese", { month: "long", day: "numeric" }),
-    new Intl.DateTimeFormat("en-u-ca-chinese", { month: "numeric", day: "numeric" })
+    new Intl.DateTimeFormat("zh-CN-u-ca-chinese", { year: "numeric", month: "long", day: "numeric" }),
+    new Intl.DateTimeFormat("en-u-ca-chinese", { year: "numeric", month: "numeric", day: "numeric" })
   ];
 
   for (const formatter of formatters) {
     const parts = formatter.formatToParts(date);
+    const relatedYear = parts.find((part) => part.type === "relatedYear")?.value;
+    const yearName = parts.find((part) => part.type === "yearName")?.value;
     const monthPart = parts.find((part) => part.type === "month")?.value;
     const dayPart = parts.find((part) => part.type === "day")?.value;
     const month = parseChineseNumber(monthPart);
     const day = parseChineseNumber(dayPart);
     if (month >= 1 && month <= 12 && day >= 1 && day <= 30) {
-      return { month, day, source: formatter.resolvedOptions().locale };
+      const year = yearName && relatedYear ? `${yearName} (${relatedYear})` : yearName || relatedYear || "-";
+      return { year, yearName, relatedYear, month, day, source: formatter.resolvedOptions().locale };
     }
   }
 
@@ -323,6 +328,7 @@ function resetOutput(message) {
   elements.resultBadge.textContent = "Hidden";
   elements.resultBadge.className = "badge neutral";
   elements.categoryBadge.textContent = "Category: -";
+  elements.yearNumber.textContent = "-";
   elements.monthNumber.textContent = "-";
   elements.dayNumber.textContent = "-";
   elements.momentNumber.textContent = "-";
@@ -348,12 +354,14 @@ function prepareInputs() {
 
   const autoLunar = getAutoLunar(date);
   if (!autoLunar) {
+    elements.yearInput.textContent = "-";
     elements.monthInput.textContent = "-";
     elements.dayInput.textContent = "-";
     elements.calendarNote.textContent = "Auto lunar date unavailable in this browser.";
     return { error: "Auto lunar date is unavailable. Try another browser or device." };
   }
 
+  const year = autoLunar.year;
   const month = autoLunar.month;
   const day = autoLunar.day;
   const momentValue = elements.momentInput.value.trim();
@@ -361,9 +369,10 @@ function prepareInputs() {
   const hour = getHourBranch(date);
   const countNumber = momentNumber || hour.number;
   const countLabel = momentNumber ? "moment number" : `${hour.name} / automatic Chinese hour`;
+  elements.yearInput.textContent = year;
   elements.monthInput.textContent = month;
   elements.dayInput.textContent = day;
-  elements.calendarNote.textContent = `Auto lunar date: ${month}/${day}`;
+  elements.calendarNote.textContent = `Auto lunar date: ${year}, ${month}/${day}`;
 
   if (!(month >= 1 && month <= 12 && day >= 1 && day <= 30)) {
     return { error: "Auto lunar month/day is outside the expected range." };
@@ -374,17 +383,18 @@ function prepareInputs() {
   }
 
   const reading = calculate(month, day, countNumber);
-  return { month, day, countNumber, countLabel, reading };
+  return { year, month, day, countNumber, countLabel, reading };
 }
 
 function showReading(prepared, options = {}) {
-  const { month, day, countNumber, countLabel, reading } = prepared;
+  const { year, month, day, countNumber, countLabel, reading } = prepared;
   const final = reading.finalResult;
   const question = options.question ?? elements.questionInput.value;
   const category = detectCategory(question);
   const custom = getCustomAnswer(question, category, reading);
 
   elements.detailsPanel.hidden = false;
+  elements.yearNumber.textContent = year;
   elements.monthNumber.textContent = month;
   elements.dayNumber.textContent = day;
   elements.momentNumber.textContent = countNumber;
@@ -398,7 +408,7 @@ function showReading(prepared, options = {}) {
   elements.timingAdvice.textContent = custom.timing;
   elements.meaningTitle.textContent = `${final.name} Meaning`;
   elements.meaningText.textContent = `${final.song} ${final.meaning}`;
-  elements.contextText.textContent = custom.context;
+  elements.contextText.textContent = `${custom.context} Lunar year: ${year}.`;
 
   elements.pathList.innerHTML = "";
   [
